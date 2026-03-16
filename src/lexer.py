@@ -82,8 +82,16 @@ def estadoParenteses(linha: str, index: int = 0, _tokens_=List[str]) -> int:
 def estadoMEM():
     pass
 
-def estadoRES():
-    pass
+def estadoRES(linha: str, index: int = 0, _tokens_=List[str]) -> int:
+    index0 = index
+    # o próximo valor de RES deve ser parenteses ou whitespace
+    if index + 3 < len(linha) and not linha[index+3] in '() ':
+        return None
+    
+    index += 3
+    _tokens_.append(("RES", "RES", index0))
+        
+    return estadoEntrada, index, _tokens_
 
 def estadoWhiteSpace(linha: str, index: int = 0, _tokens_=List[str]) -> int:
     # não tokenizamos whitespace
