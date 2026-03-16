@@ -2,6 +2,17 @@
 # ATENÇÃO: uso de expressões regulares é PROIBIDO.
 # Cada estado do AFD deve ser implementado como uma função separada.
 
+from typing import List, Tuple
+from string import ascii_uppercase
+
+class LexError (Exception):
+    ...
+
+
+expression = r'((4.83 3 //) 12 *)' 
+
+_OP = r"+-*/%^"
+_ABC= ascii_uppercase
 
 def estado_inicial():
     pass
