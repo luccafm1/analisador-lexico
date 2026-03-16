@@ -1,6 +1,4 @@
-# Analisador Léxico — Autômato Finito Determinístico (AFD)
-# ATENÇÃO: uso de expressões regulares é PROIBIDO.
-# Cada estado do AFD deve ser implementado como uma função separada.
+# analisador léxico - aluno 1
 
 from typing import List, Tuple
 from string import ascii_uppercase
@@ -16,7 +14,7 @@ _ABC= ascii_uppercase
 
 def parseExpressao(linha: str, _tokens_:List[Tuple[str, str, int]]) -> List[str]:
     length = len(linha)
-    state = ...
+    state = estadoEntrada
     idx = 0
     while idx < length:
         res = state(linha, idx, _tokens_)
@@ -69,6 +67,13 @@ def estadoOperador(linha: str, index: int = 0, _tokens_=List[str]) -> int:
         
     return estadoEntrada, index, _tokens_
 
+def estadoWhiteSpace(linha: str, index: int = 0, _tokens_=List[str]) -> int:
+    # não tokenizamos whitespace
+    while index < len(linha) and linha[index].isspace():
+        index += 1
+    
+    return estadoEntrada, index, _tokens_
+
 def estadoParenteses(linha: str, index: int = 0, _tokens_=List[str]) -> int:
     while index < len(linha) and linha[index] in '()':
         if linha[index] == '(':
@@ -76,17 +81,6 @@ def estadoParenteses(linha: str, index: int = 0, _tokens_=List[str]) -> int:
         else:
             _tokens_.append(("RPAREN", linha[index], index))
         index += 1
-        
-    return estadoEntrada, index, _tokens_
-
-def estadoMEM(linha:str, index: int = 0, _tokens_=List[str]) -> int:
-    full_MEM = ""
-    index0 = index
-    while index < len(linha) and linha[index] in _ABC:
-        full_MEM += linha[index]
-        index += 1
-    
-    _tokens_.append(("MEM", full_MEM, index0))
         
     return estadoEntrada, index, _tokens_
 
@@ -101,9 +95,13 @@ def estadoRES(linha: str, index: int = 0, _tokens_=List[str]) -> int:
         
     return estadoEntrada, index, _tokens_
 
-def estadoWhiteSpace(linha: str, index: int = 0, _tokens_=List[str]) -> int:
-    # não tokenizamos whitespace
-    while index < len(linha) and linha[index].isspace():
+def estadoMEM(linha:str, index: int = 0, _tokens_=List[str]) -> int:
+    full_MEM = ""
+    index0 = index
+    while index < len(linha) and linha[index] in _ABC:
+        full_MEM += linha[index]
         index += 1
     
+    _tokens_.append(("MEM", full_MEM, index0))
+        
     return estadoEntrada, index, _tokens_
