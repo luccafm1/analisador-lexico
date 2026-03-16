@@ -1,5 +1,5 @@
 # Executor de expressões RPN e gerenciamento de memória
-
+from lexer import parseExpressao, LexError
 
 def executarExpressao():
     """
@@ -14,7 +14,6 @@ def testar_executor():
     Deve cobrir operações simples, aninhadas e comandos RES/MEM.
     """
     pass
-from lexer import parseExpressao, LexError
 
 """
 executarExpressao.py
@@ -43,7 +42,6 @@ T_RPAREN = "RPAREN"
 T_RES ="RES"
 T_MEM = "MEM"
 
-
 # Funções para auxiliar na identificaçãomdos itens do token
 
 def tipo(token: tuple) -> str:
@@ -54,7 +52,6 @@ def valor(token: tuple) -> str:
 
 def index(token: tuple) -> int:
     return token[2]
-
 
 # Exceções específicas de execução
 
@@ -79,7 +76,6 @@ def tokenizar(linha : str) -> str:
     tokens = []
     parseExpressao(linha, tokens)
     return tokens
-
 
 def encontrar_fechamento(tokens: list, inicio: int) -> int:
     """
