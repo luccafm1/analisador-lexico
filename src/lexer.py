@@ -78,5 +78,9 @@ def estadoMEM():
 def estadoRES():
     pass
 
-def estadoWhiteSpace():
-    pass
+def estadoWhiteSpace(linha: str, index: int = 0, _tokens_=List[str]) -> int:
+    # não tokenizamos whitespace
+    while index < len(linha) and linha[index].isspace():
+        index += 1
+    
+    return estadoEntrada, index, _tokens_
