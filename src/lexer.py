@@ -39,8 +39,23 @@ def estadoEntrada(linha: str, index: int = 0, _tokens_=List[str]) -> int:
     
     return None # <- token inválido
 
-def estadoNumero():
-    pass
+def estadoNumero(linha: str, index: int = 0, _tokens_=List[str]) -> int:
+    full_num = ""
+    index0 = index
+    while (index < len(linha) and 
+           (linha[index].isdecimal() or 
+            linha[index] == '.')):
+        
+        full_num += linha[index]
+        index += 1
+    
+    # tratar números malformados (e.g. 3.14.5)
+    if full_num.count('.') > 1:
+        return None
+    
+    _tokens_.append(("NUM", full_num, index0))
+
+    return estadoEntrada, index, _tokens_
 
 def estadoOperador():
     pass
