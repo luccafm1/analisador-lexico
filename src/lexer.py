@@ -79,8 +79,16 @@ def estadoParenteses(linha: str, index: int = 0, _tokens_=List[str]) -> int:
         
     return estadoEntrada, index, _tokens_
 
-def estadoMEM():
-    pass
+def estadoMEM(linha:str, index: int = 0, _tokens_=List[str]) -> int:
+    full_MEM = ""
+    index0 = index
+    while index < len(linha) and linha[index] in _ABC:
+        full_MEM += linha[index]
+        index += 1
+    
+    _tokens_.append(("MEM", full_MEM, index0))
+        
+    return estadoEntrada, index, _tokens_
 
 def estadoRES(linha: str, index: int = 0, _tokens_=List[str]) -> int:
     index0 = index
