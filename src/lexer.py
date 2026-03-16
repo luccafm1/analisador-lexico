@@ -14,6 +14,18 @@ expression = r'((4.83 3 //) 12 *)'
 _OP = r"+-*/%^"
 _ABC= ascii_uppercase
 
+def parseExpressao(linha: str, _tokens_:List[Tuple[str, str, int]]) -> List[str]:
+    length = len(linha)
+    state = ...
+    idx = 0
+    while idx < length:
+        res = state(linha, idx, _tokens_)
+        if res is None:
+            raise LexError(f'caractere inválido ou malformado: `{linha[idx]}` na posição {idx}')
+        state, idx, _tokens_ = res
+    
+    _tokens_.sort(key=lambda f: f[2]) 
+
 def estado_inicial():
     pass
 
@@ -36,15 +48,6 @@ def estado_identificador():
     pass
 
 def estado_erro():
-    pass
-
-
-def parseExpressao():
-    """
-    Analisa uma linha de expressão RPN e retorna uma lista de tokens.
-    Implementado como AFD, cada estado é uma função.
-    NÃO usa expressões regulares.
-    """
     pass
 
 def testar_lexer():
