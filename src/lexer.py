@@ -69,8 +69,15 @@ def estadoOperador(linha: str, index: int = 0, _tokens_=List[str]) -> int:
         
     return estadoEntrada, index, _tokens_
 
-def estadoParenteses():
-    pass
+def estadoParenteses(linha: str, index: int = 0, _tokens_=List[str]) -> int:
+    while index < len(linha) and linha[index] in '()':
+        if linha[index] == '(':
+            _tokens_.append(("LPAREN", linha[index], index))
+        else:
+            _tokens_.append(("RPAREN", linha[index], index))
+        index += 1
+        
+    return estadoEntrada, index, _tokens_
 
 def estadoMEM():
     pass
