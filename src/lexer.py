@@ -26,33 +26,33 @@ def parseExpressao(linha: str, _tokens_:List[Tuple[str, str, int]]) -> List[str]
     
     _tokens_.sort(key=lambda f: f[2]) 
 
-def estado_inicial():
+def estadoEntrada(linha: str, index: int = 0, _tokens_=List[str]) -> int:
+    if linha[index].isdecimal() : return estadoNumero, index, _tokens_
+    if linha[index] in _OP      : return estadoOperador, index, _tokens_
+    if linha[index] in '()'     : return estadoParenteses, index, _tokens_
+    if (index + 2 < len(linha)) and \
+        linha[index:index + 3] == 'RES': 
+        return estadoRES, index, _tokens_
+    if linha[index] in _ABC     : return estadoMEM, index, _tokens_
+    if linha[index].isspace()   : return estadoWhiteSpace, index, _tokens_
+    
+    
+    return None # <- token inválido
+
+def estadoNumero():
     pass
 
-def estado_numero():
+def estadoOperador():
     pass
 
-def estado_ponto():
+def estadoParenteses():
     pass
 
-def estado_decimal():
+def estadoMEM():
     pass
 
-def estado_sinal():
+def estadoRES():
     pass
 
-def estado_barra():
-    pass
-
-def estado_identificador():
-    pass
-
-def estado_erro():
-    pass
-
-def testar_lexer():
-    """
-    Testa o analisador léxico com entradas válidas e inválidas.
-    Deve cobrir todos os casos exigidos pelo enunciado.
-    """
+def estadoWhiteSpace():
     pass
