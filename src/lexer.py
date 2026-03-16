@@ -57,8 +57,17 @@ def estadoNumero(linha: str, index: int = 0, _tokens_=List[str]) -> int:
 
     return estadoEntrada, index, _tokens_
 
-def estadoOperador():
-    pass
+def estadoOperador(linha: str, index: int = 0, _tokens_=List[str]) -> int:
+    # note que todos os operadores são de apenas um caracter, exceto
+    # divisão inteira (//)
+    if linha[index:index+2] == '//':
+        _tokens_.append(("OP", '//', index))
+        index += 2
+    else:
+        _tokens_.append(("OP", linha[index], index))
+        index += 1
+        
+    return estadoEntrada, index, _tokens_
 
 def estadoParenteses():
     pass
