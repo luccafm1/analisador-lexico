@@ -96,3 +96,55 @@ def encontrar_fechamento(tokens: list, inicio: int) -> int:
     raise ErroExpressaoInvalida(
         f"Parêntese aberto na posição {tokens[inicio]} não foi fechado!"
     )
+
+def preprocessar_aninhamento(tokens: list, memoria: dict, historico: list) -> list:
+    """
+    Resolve expressões aninhadas de dentro para fora. Cada iteração:
+
+    - Lê a lista completa de tokens da esquerda para a direita
+    - Ao encontrar um LPAREN cujointerior não tem outros LPAREN, identifica
+      como o mais interno, avalia com a pilha e substitui o segmento com o 
+      valor calculado token NUM
+    - Reinicia a varredura
+    - Para quando o único LPAREN restante é da função externa
+    
+    """
+
+    while True:
+        encontrou = False
+
+        for i in range(len(tokens)):
+            if tipo(tokens[i]) != T_LPAREN:
+                continue
+            fechamento = encontrar_fechamento(tokens, i)
+            interior = tokens[ i+1 : fechamento]
+
+            #Procura outro aninhamento; se tiver, pula pra próxima iteração
+            tem_aninhado = any(tipo(t) == T_LPAREN for t in interior)
+
+            if tem_aninhado:
+                continue
+            
+            #Verifica se tem LPAREN fora do aninhamento
+            externos = [
+                t for t in (tokens[:i] + tokens[fechamento + 1])
+                if tipo(t) == T_LPAREN
+            ]
+            if not externos:
+                # Final da expressão
+                break
+            #Avalia expressão plana mais interna
+            sub_tokens = tokens[i : fechamento + 1]
+            resultado = _avaliar_expressao_plana(sub_tokens, memoria, historico) #falta implementar
+
+            #Cria token NUM com o resultado (posição 0 como placeholder)
+            token_resultado = (T_NUM, repr(resultado), 0)
+
+            #Substitui o segmento pelo token resultado
+            tokens = tokens[:i] + [token_resultado] + tokens[fechamento + 1]
+            encontrou = True
+            break
+        if  not encontrou:
+            break
+    return tokens
+
