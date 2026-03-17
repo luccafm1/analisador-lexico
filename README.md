@@ -4,7 +4,7 @@
 **Disciplina:** Construção de Interpretadores  
 **Professor:** Frank Alcantara
 
-## Integrantes (ordem alfabética)
+## Integrantes
 
 | Nome | GitHub |
 |------|--------|
