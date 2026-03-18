@@ -6,9 +6,6 @@ from string import ascii_uppercase
 class LexError (Exception):
     ...
 
-
-expression = r'((4.83 3 //) 12 *)' 
-
 _OP = r"+-*/%^"
 _ABC= ascii_uppercase
 
