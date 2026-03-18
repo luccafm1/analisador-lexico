@@ -22,7 +22,7 @@ def parseExpressao(linha: str, _tokens_:List[Tuple[str, str, int]]) -> List[str]
         read = state(linha, idx, _tokens_, word)
 
         if read is None:
-            raise LexError('Token inválido ou malformado', linha, idx)
+            raise LexError(f'Token inválido ou malformado: {linha[idx]} na posição {idx}')
     
     _tokens_.sort(key=lambda f: f[2]) 
 
