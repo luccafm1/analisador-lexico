@@ -6,102 +6,223 @@ from string import ascii_uppercase
 class LexError (Exception):
     ...
 
-
-expression = r'((4.83 3 //) 12 *)' 
-
-_OP = r"+-*/%^"
+_OP = r"+-*%^" # `/` não conta aqui, pois contamos `//` em um estado separado
 _ABC= ascii_uppercase
 
 def parseExpressao(linha: str, _tokens_:List[Tuple[str, str, int]]) -> List[str]:
+    if not linha: return []
+    
     length = len(linha)
-    state = estadoEntrada
     idx = 0
+    word = "" #<- porque precisamos montar 'palavras', por exemplo um número de >1 digito
+
+    read = estadoEntrada(linha, idx, _tokens_, word)
     while idx < length:
-        res = state(linha, idx, _tokens_)
-        if res is None:
-            raise LexError(f'caractere inválido ou malformado: `{linha[idx]}` na posição {idx}')
-        state, idx, _tokens_ = res
+        state, idx, _tokens_, word = read
+        read = state(linha, idx, _tokens_, word)
+
+        if read is None:
+            raise LexError(f'Token inválido ou malformado: {linha[idx]} na posição {idx}')
     
     _tokens_.sort(key=lambda f: f[2]) 
 
-def estadoEntrada(linha: str, index: int = 0, _tokens_=List[str]) -> int:
-    if linha[index].isdecimal() : return estadoNumero, index, _tokens_
-    if linha[index] in _OP      : return estadoOperador, index, _tokens_
-    if linha[index] in '()'     : return estadoParenteses, index, _tokens_
-    if (index + 2 < len(linha)) and \
-        linha[index:index + 3] == 'RES': 
-        return estadoRES, index, _tokens_
-    if linha[index] in _ABC     : return estadoMEM, index, _tokens_
-    if linha[index].isspace()   : return estadoWhiteSpace, index, _tokens_
+def estadoEntrada(linha: str, 
+                  index: int = 0, 
+                  _tokens_:List[Tuple[str, str, int]] = [], 
+                  word: str = "") -> int:
     
+    if linha[index].isdecimal() : return estadoNumero,      index + 1, _tokens_, linha[index]
+    if linha[index] in _OP      : return estadoOperador,    index + 1, _tokens_, linha[index]
+    if linha[index] == '/'      : return estadoDivisao,     index + 1, _tokens_, linha[index]
+    if linha[index] == '('      : return estadoLPAREN,      index + 1, _tokens_, linha[index]
+    if linha[index] == ')'      : return estadoRPAREN,      index + 1, _tokens_, linha[index]
+    if linha[index] == 'R'      : return estadoR,           index + 1, _tokens_, linha[index]
+    if linha[index] in _ABC     : return estadoMEM,         index + 1, _tokens_, linha[index]
+    if linha[index].isspace()   : return estadoWhiteSpace,  index + 1, _tokens_, linha[index]
     
     return None # <- token inválido
 
-def estadoNumero(linha: str, index: int = 0, _tokens_=List[str]) -> int:
-    full_num = ""
-    index0 = index
-    while (index < len(linha) and 
-           (linha[index].isdecimal() or 
-            linha[index] == '.')):
-        
-        full_num += linha[index]
-        index += 1
+def estadoNumero(linha: str, 
+                 index: int = 0, 
+                 _tokens_:List[Tuple[str, str, int]] = [], 
+                 word: str = "") -> int:
     
-    # tratar números malformados (e.g. 3.14.5)
-    if full_num.count('.') > 1:
+    if index >= len(linha): 
+        _tokens_.append(("NUM", word, index - len(word)))
+        return estadoEntrada, index, _tokens_, ""
+    
+    if linha[index].isdecimal():
+        return estadoNumero, index+1, _tokens_, word + linha[index]
+    
+    if linha[index] == '.':
+        return estadoPonto, index+1, _tokens_, word + linha[index]
+
+    _tokens_.append(("NUM", word, index - len(word)))
+    return estadoEntrada, index, _tokens_, ""
+
+def estadoPonto(linha: str, 
+                index: int = 0, 
+                _tokens_:List[Tuple[str, str, int]] = [], 
+                word: str = "") -> int:
+    
+    if index >= len(linha):
+        # número malformado: digito `n.` é inválido
         return None
     
-    _tokens_.append(("NUM", full_num, index0))
+    if linha[index].isdecimal():
+        return estadoDecimal, index+1, _tokens_, word + linha[index]
+    
+    return None
 
-    return estadoEntrada, index, _tokens_
+def estadoDecimal(linha: str, 
+                  index: int = 0, 
+                  _tokens_:List[Tuple[str, str, int]] = [], 
+                  word: str = "") -> int:
+    
+    if index >= len(linha):
+        _tokens_.append(("NUM", word, index - len(word)))
+        return estadoEntrada, index, _tokens_, ""
+    
+    if linha[index].isdecimal():
+        return estadoDecimal, index+1, _tokens_, word + linha[index]
+    
+    if linha[index] == '.':
+        # número malformado: mais de um ponto
+        return None
+    
+    _tokens_.append(("NUM", word, index - len(word)))
+    return estadoEntrada, index, _tokens_, ""
 
-def estadoOperador(linha: str, index: int = 0, _tokens_=List[str]) -> int:
+
+def estadoOperador(linha: str, 
+                   index: int = 0, 
+                   _tokens_:List[Tuple[str, str, int]] = [], 
+                   word: str = "") -> int:
+    
+    _tokens_.append(("OP", word, index - len(word)))
+    return estadoEntrada, index, _tokens_, ""
+
+def estadoDivisao(linha: str, 
+                  index: int = 0, 
+                  _tokens_:List[Tuple[str, str, int]] = [], 
+                  word: str = "") -> int:
+    
     # note que todos os operadores são de apenas um caracter, exceto
     # divisão inteira (//)
-    if linha[index:index+2] == '//':
-        _tokens_.append(("OP", '//', index))
-        index += 2
-    else:
-        _tokens_.append(("OP", linha[index], index))
-        index += 1
-        
-    return estadoEntrada, index, _tokens_
+    if index >= len(linha):
+        _tokens_.append(("OP", word, index - len(word)))
+        return estadoEntrada, index, _tokens_, ""
+    
+    if linha[index] == '/':
+        _tokens_.append(("OP", word + linha[index], index - len(word)))
+        return estadoEntrada, index+1, _tokens_, ""
+    
+    _tokens_.append(("OP", word, index - len(word)))
+    return estadoEntrada, index, _tokens_, ""
+    
 
-def estadoWhiteSpace(linha: str, index: int = 0, _tokens_=List[str]) -> int:
+def estadoWhiteSpace(linha: str, 
+                     index: int = 0, 
+                     _tokens_:List[Tuple[str, str, int]] = [], 
+                     word: str = "") -> int:
+    
     # não tokenizamos whitespace
-    while index < len(linha) and linha[index].isspace():
-        index += 1
+    if index >= len(linha):
+        return estadoEntrada, index, _tokens_, ""
     
-    return estadoEntrada, index, _tokens_
-
-def estadoParenteses(linha: str, index: int = 0, _tokens_=List[str]) -> int:
-    while index < len(linha) and linha[index] in '()':
-        if linha[index] == '(':
-            _tokens_.append(("LPAREN", linha[index], index))
-        else:
-            _tokens_.append(("RPAREN", linha[index], index))
-        index += 1
-        
-    return estadoEntrada, index, _tokens_
-
-def estadoRES(linha: str, index: int = 0, _tokens_=List[str]) -> int:
-    index0 = index
-    # o próximo valor de RES deve ser parenteses ou whitespace
-    if index + 3 < len(linha) and not linha[index+3] in '() ':
-        return None
+    if linha[index].isspace():
+        return estadoWhiteSpace, index + 1, _tokens_, ""
     
-    index += 3
-    _tokens_.append(("RES", "RES", index0))
-        
-    return estadoEntrada, index, _tokens_
+    return estadoEntrada, index, _tokens_, ""
 
-def estadoMEM(linha:str, index: int = 0, _tokens_=List[str]) -> int:
-    full_MEM = ""
-    index0 = index
-    while index < len(linha) and linha[index] in _ABC:
-        full_MEM += linha[index]
-        index += 1
+def estadoLPAREN(linha: str, 
+                 index: int = 0, 
+                 _tokens_:List[Tuple[str, str, int]] = [], 
+                 word: str = "") -> int:
     
-    _tokens_.append(("MEM", full_MEM, index0))
-        
-    return estadoEntrada, index, _tokens_
+    _tokens_.append(("LPAREN", word, index - len(word)))
+    return estadoEntrada, index, _tokens_, ""
+    
+def estadoRPAREN(linha: str, 
+                 index: int = 0, 
+                 _tokens_:List[Tuple[str, str, int]] = [], 
+                 word: str = "") -> int:
+    
+    _tokens_.append(("RPAREN", word, index - len(word)))
+    return estadoEntrada, index, _tokens_, ""
+
+def estadoR(linha: str, 
+              index: int = 0, 
+              _tokens_:List[Tuple[str, str, int]] = [], 
+              word: str = "") -> int:
+    
+    if index >= len(linha):
+        _tokens_.append(("MEM", word, index - len(word)))
+        return estadoEntrada, index, _tokens_, ""
+    
+    if linha[index] == 'E':
+        return estadoE, index+1, _tokens_, word + linha[index]
+    
+    if linha[index] in _ABC:
+        return estadoMEM, index + 1, _tokens_, word + linha[index]
+    
+    _tokens_.append(("MEM", word, index - len(word)))
+    return estadoEntrada, index, _tokens_, ""
+    
+
+def estadoE(linha: str,
+            index: int = 0, 
+            _tokens_:List[Tuple[str, str, int]] = [], 
+            word: str = "") -> int:
+    
+    if index >= len(linha):
+        _tokens_.append(("MEM", word, index - len(word)))
+        return estadoEntrada, index, _tokens_, ""
+
+    if linha[index] == 'S':
+        return estadoS, index+1, _tokens_, word + linha[index]
+    
+    if linha[index] in _ABC:
+        return estadoMEM, index + 1, _tokens_, word + linha[index]
+    
+    _tokens_.append(("MEM", word, index - len(word)))
+    return estadoEntrada, index, _tokens_, ""
+    
+def estadoS(linha: str,
+            index: int = 0, 
+            _tokens_:List[Tuple[str, str, int]] = [], 
+            word: str = "") -> int:
+    
+    if index >= len(linha):
+        _tokens_.append(("RES", word, index - len(word)))
+        return estadoEntrada, index, _tokens_, ""
+    
+    if linha[index] in _ABC:
+        return estadoMEM, index+1, _tokens_, word + linha[index]
+    
+    _tokens_.append(("RES", word, index - len(word)))
+    return estadoEntrada, index, _tokens_, ""
+
+def estadoMEM(linha: str, 
+              index: int = 0, 
+              _tokens_:List[Tuple[str, str, int]] = [], 
+              word: str = "") -> int:
+    
+    if index >= len(linha):
+        _tokens_.append(("MEM", word, index - len(word)))
+        return estadoEntrada, index, _tokens_, ""
+    
+    if linha[index] in _ABC:
+        return estadoMEM, index+1, _tokens_, word + linha[index]
+    
+    _tokens_.append(("MEM", word, index - len(word)))
+    return estadoEntrada, index, _tokens_, ""
+
+
+expression = r'((4 5 +) 12 //)' 
+
+TOKENS = []
+parseExpressao(expression, TOKENS)
+
+print(expression)
+print(TOKENS)
