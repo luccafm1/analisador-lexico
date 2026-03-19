@@ -26,8 +26,29 @@ def lerArquivo():
 
     return linhas
 
-def gerarAssembly():
+def gerarAssembly(tokens):
     """
-    Recebe a lista de tokens de todas as linhas e gera código Assembly
+    Recebe lista de tuplas ('TIPO', 'valor', posição) do parseExpressao e gera código Assembly ARMv7.
+    Tipos possíveis: NUM, OP, LPAREN, RPAREN, MEM, RES.
     """
-    pass
+    linhas = []
+
+    # Cabeçalho
+    linhas.append(".global _start")
+    linhas.append(".data")
+    linhas.append("")
+    linhas.append(".text")
+    linhas.append("_start:")
+
+    # Habilitar VFP via FPEXC
+    linhas.append("    @ Habilitar VFP")
+    linhas.append("    VMRS r0, FPEXC")
+    linhas.append("    ORR  r0, r0, #0x40000000")
+    linhas.append("    VMSR FPEXC, r0")
+    linhas.append("")
+
+    # Rodapé
+    linhas.append("_end:")
+    linhas.append("    B _end")
+
+    return "\n".join(linhas)
