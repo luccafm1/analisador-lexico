@@ -1,20 +1,6 @@
 # Executor de expressões RPN e gerenciamento de memória
 from lexer import parseExpressao, LexError
 
-def executarExpressao():
-    """
-    Avalia uma expressão RPN a partir dos tokens gerados por parseExpressao.
-    Usa uma pilha para resolver as operações.
-    """
-    pass
-
-def testar_executor():
-    """
-    Testa a execução de expressões e comandos especiais.
-    Deve cobrir operações simples, aninhadas e comandos RES/MEM.
-    """
-    pass
-
 """
 executarExpressao.py
 
@@ -50,7 +36,7 @@ def tipo(token: tuple) -> str:
 def valor(token: tuple) -> str:
     return token[1]
 
-def index(token: tuple) -> int:
+def posicao(token: tuple) -> int:
     return token[2]
 
 # Exceções específicas de execução
@@ -94,7 +80,7 @@ def encontrar_fechamento(tokens: list, inicio: int) -> int:
                 return i
         i += 1
     raise ErroExpressaoInvalida(
-        f"Parêntese aberto na posição {tokens[inicio]} não foi fechado!"
+        f"Parêntese aberto na posição {posicao(tokens[inicio])} não foi fechado!"
     )
 
 def _aplicar_operador(op: str, a: float, b: float) -> float:
@@ -220,7 +206,7 @@ def _avaliar_expressao_plana(tokens: list, memoria: dict, historico: list)-> flo
         )
     return pilha[0]
 
-
+#processador de aninhamento
 def preprocessar_aninhamento(tokens: list, memoria: dict, historico: list) -> list:
     """
     Resolve expressões aninhadas de dentro para fora. Cada iteração:
@@ -251,7 +237,7 @@ def preprocessar_aninhamento(tokens: list, memoria: dict, historico: list) -> li
             
             #Verifica se tem LPAREN fora do aninhamento
             externos = [
-                t for t in (tokens[:i] + tokens[fechamento + 1])
+                t for t in (tokens[:i] + tokens[fechamento + 1:])
                 if tipo(t) == T_LPAREN
             ]
             if not externos:
@@ -265,13 +251,48 @@ def preprocessar_aninhamento(tokens: list, memoria: dict, historico: list) -> li
             token_resultado = (T_NUM, repr(resultado), 0)
 
             #Substitui o segmento pelo token resultado
-            tokens = tokens[:i] + [token_resultado] + tokens[fechamento + 1]
+            tokens = tokens[:i] + [token_resultado] + tokens[fechamento + 1:]
             encontrou = True
             break
         if  not encontrou:
             break
     return tokens
 
+#interface executarExpressao
+def executarExpressao(tokens: list, memoria: dict, historico: list) -> float:
+    """
+    Avalia uma expressão RPN representada com uma lista de tuplas.
 
+    Passos:
+        - Pré-processa expressões aninhadas (preprocessar_aninhamento)
+        - Avalia a expressão plana resultante com pilha (_avaliar_expressao_plana)
+        - Insere o resultado no inicio do histórico (historico.insert)
 
+    Parâmetros:
+        - tokens :   list[tuple] - saída de parseExpressao
+        - memoria:   dict        - { "NOME": float } compartilhado entre linhas
+        - historico: list[float] - indice 0 = resultado mais recente
+
+    Retorno:
+        - float - Resultado da expressão
+
+    Lança:
+        LexError    - token inválido (do lexer)
+        ErroExpressaoInvalida - estrutura RPN inválida
+        ErroDivisaoPorZero - divisão por zero
+        ErroMemoriaNaoInicializada - MEM não inicializado
+        ErroHistoricoInvalido - (N RES) fora do intervalo
+    """
+
+    tokens_planos = preprocessar_aninhamento(
+        list(tokens),
+        memoria,
+        historico
+    )
+
+    resultado = _avaliar_expressao_plana(tokens_planos, memoria, historico)
+
+    historico.insert(0, resultado)
+
+    return resultado
 
